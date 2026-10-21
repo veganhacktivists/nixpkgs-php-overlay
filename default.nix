@@ -27,7 +27,9 @@ let
     name:
     { version, sha256 }:
     let
-      orig = prev.${name};
+      orig =
+        prev.${name}
+          or (throw "php overlay: ${name} does not exist in this nixpkgs revision; cannot bump to ${version}");
     in
     # Never downgrade: once nixpkgs has caught up (or passed) this version,
     # the overlay becomes a no-op and prints a reminder to remove it.
@@ -42,5 +44,5 @@ let
     else
       lib.warn "php overlay: nixpkgs ${name} is already ${orig.version} (>= ${version}); remove this override" orig;
 in
-# Only touch branches that exist in the nixpkgs revision being used.
-lib.mapAttrs bump (lib.filterAttrs (name: _: prev ? ${name}) targets)
+# Fails evaluation (and therefore the build) if a listed branch is missing.
+builtins.mapAttrs bump targets
