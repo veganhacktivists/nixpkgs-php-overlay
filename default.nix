@@ -34,13 +34,30 @@ let
     # Never downgrade: once nixpkgs has caught up (or passed) this version,
     # the overlay becomes a no-op and prints a reminder to remove it.
     if lib.versionOlder orig.version version then
-      orig.overrideAttrs (old: {
-        inherit version;
-        src = final.fetchurl {
-          url = "https://www.php.net/distributions/php-${version}.tar.bz2";
-          inherit sha256;
+      (orig.override {
+        # Applies to the extension set built for this PHP. Kept through the
+        # overrideAttrs below, which rebuilds PHP with the same arguments.
+        packageOverrides = pfinal: pprev: {
+          extensions = pprev.extensions // {
+            filter = pprev.extensions.filter.overrideAttrs (old: {
+              # These memory-limit tests fail inside the Coolify build
+              # container; drop just these three, keep the rest of the suite.
+              preCheck = (old.preCheck or "") + ''
+                find . \( -name oom_filter_default_encoded.phpt \
+                  -o -name oom_filter_input.phpt \
+                  -o -name oom_filter_input_array.phpt \) -delete
+              '';
+            });
+          };
         };
-      })
+      }).overrideAttrs
+        (old: {
+          inherit version;
+          src = final.fetchurl {
+            url = "https://www.php.net/distributions/php-${version}.tar.bz2";
+            inherit sha256;
+          };
+        })
     else
       lib.warn "php overlay: nixpkgs ${name} is already ${orig.version} (>= ${version}); remove this override" orig;
 in
