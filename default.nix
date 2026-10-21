@@ -10,16 +10,16 @@ let
 
   targets = {
     php85 = {
-      version = "8.5.11";
-      sha256 = "dc940716a8c73e531c0078eecb955d595d321ec2cc9d47149cf0089ea6e18f64";
+      version = "8.5.12";
+      sha256 = "ffb60edc437ced63b5137e4984db379a8111c50049c711510d8b958277efc1a8";
     };
     php84 = {
-      version = "8.4.26";
-      sha256 = "4209694d7b0f63c45a3773e07cdc2bbfc71249265a5d951b1ff53e1147edc5ca";
+      version = "8.4.27";
+      sha256 = "b2530a877c722f4b08c9e174a30cb08bac2b7e1903ee6e9e315f0aa9f5f82c24";
     };
     php83 = {
-      version = "8.3.35";
-      sha256 = "e279d9ec90d9bcab900d146816e5b11d3e8924b80e2ba36c7d7dae7d71dcbf2d";
+      version = "8.3.36";
+      sha256 = "46f4b45e3688ed2b1819015a7b532c15b51cc055bdd3b13fd00ddfeebeedcd5f";
     };
   };
 
