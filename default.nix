@@ -37,19 +37,35 @@ let
       (orig.override {
         # Applies to the extension set built for this PHP. Kept through the
         # overrideAttrs below, which rebuilds PHP with the same arguments.
-        packageOverrides = pfinal: pprev: {
-          extensions = pprev.extensions // {
-            filter = pprev.extensions.filter.overrideAttrs (old: {
-              # These memory-limit tests fail inside the Coolify build
-              # container; drop just these three, keep the rest of the suite.
-              preCheck = (old.preCheck or "") + ''
-                find . \( -name oom_filter_default_encoded.phpt \
-                  -o -name oom_filter_input.phpt \
-                  -o -name oom_filter_input_array.phpt \) -delete
-              '';
-            });
+        packageOverrides =
+          pfinal: pprev:
+          let
+            # Resource-limit tests (memory_limit bailouts, deep recursion) fail
+            # inside the Coolify build container but pass on a normal host.
+            # Drop just these files and keep the rest of each extension's suite.
+            dropTests =
+              name: files:
+              pprev.extensions.${name}.overrideAttrs (old: {
+                preCheck =
+                  (old.preCheck or "")
+                  + ''
+                    find . \( ${lib.concatMapStringsSep " -o " (f: "-name ${f}") files} \) -delete
+                  '';
+              });
+          in
+          {
+            extensions = pprev.extensions // {
+              filter = dropTests "filter" [
+                "oom_filter_default_encoded.phpt"
+                "oom_filter_input.phpt"
+                "oom_filter_input_array.phpt"
+              ];
+              # iconv_substr() leak on memory_limit bailout (8.4.28 on Coolify).
+              iconv = dropTests "iconv" [ "gh17399_substr.phpt" ];
+              # Stack overflow on a deeply nested document (8.4.28 on Coolify).
+              dom = dropTests "dom" [ "gh23116.phpt" ];
+            };
           };
-        };
       }).overrideAttrs
         (old: {
           inherit version;
